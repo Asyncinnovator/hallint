@@ -1,0 +1,33 @@
+{
+  "name": "hallint",
+  "version": "0.1.0",
+  "description": "Detect security and quality issues in AI-generated code",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+  },
+  "keywords": ["ai", "static-analysis", "security", "linter", "copilot", "cursor", "code-quality", "hallint"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hallint-dev/hallint"
+  },
+  "dependencies": {
+    "glob": "^10.3.0",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
