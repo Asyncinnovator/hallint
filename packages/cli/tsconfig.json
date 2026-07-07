@@ -4,7 +4,7 @@
     "rootDir": "..",
     "outDir": "dist",
     "paths": {
-      "hallint": ["../core/src/index.ts"]
+      "@asyncinnovator/hallint": ["../core/src/index.ts"]
     }
   },
   "include": ["src", "../core/src"],

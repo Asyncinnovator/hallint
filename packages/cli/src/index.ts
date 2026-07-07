@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { scan } from "hallint"
-import type { ScanConfig, Finding, Severity } from "hallint"
+import { scan } from '@asyncinnovator/hallint'
+import type { ScanConfig, Finding, Severity } from '@asyncinnovator/hallint'
 
 const args = process.argv.slice(2)
 

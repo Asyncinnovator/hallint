@@ -7,7 +7,7 @@ AI coding assistants (Copilot, Cursor, etc.) are fast, but they consistently int
 ## Install
 
 ```bash
-npm install hallint
+npm install @asyncinnovator/hallint
 ```
 
 ## CLI
