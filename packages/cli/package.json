@@ -2,10 +2,12 @@
   "name": "hallint-cli",
   "version": "0.1.0",
   "description": "CLI for hallint",
-  "bin": { "hallint": "./dist/index.js" },
+  "bin": {
+    "hallint": "./dist/index.js"
+  },
   "main": "./dist/index.js",
   "scripts": {
-    "build": "tsup src/index.ts --format cjs --banner.js '#!/usr/bin/env node' --clean"
+    "build": "tsup src/index.ts --format cjs --clean"
   },
   "dependencies": {
     "hallint": "*",

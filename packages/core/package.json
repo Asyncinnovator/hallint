@@ -7,17 +7,28 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
   },
-  "keywords": ["ai", "static-analysis", "security", "linter", "copilot", "cursor", "code-quality", "hallint"],
+  "keywords": [
+    "ai",
+    "static-analysis",
+    "security",
+    "linter",
+    "copilot",
+    "cursor",
+    "code-quality",
+    "hallint"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
