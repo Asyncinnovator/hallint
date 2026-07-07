@@ -1,6 +1,6 @@
 {
   "name": "hallint",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Monorepo for hallint — detect security and quality issues in AI-generated code",
   "workspaces": [
@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
