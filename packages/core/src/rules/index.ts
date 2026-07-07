@@ -5,7 +5,7 @@ export const hardcodedSecret: Rule = {
   severity: "critical",
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
-  pattern: /(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[=:]\s*["'"'"'][A-Za-z0-9+/=_\-]{16,}["'"'"']/i,
+  pattern: /(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[=:]\s*["'"'"'][A-Za-z0-9+/=_-]{16,}["'"'"']/i,
   message: "Hardcoded secret detected — API key, token, or password in source code",
   fix: "Move to environment variables: process.env.YOUR_SECRET_NAME",
   docs: "https://hallint.dev/rules/hardcoded-secret",

@@ -55,7 +55,7 @@ function fmt(f: Finding): string {
   return lines.join("\n")
 }
 
-;(async () => {
+async function main() {
   const config: ScanConfig = { files, rules: rules === "all" ? "all" : "recommended", minSeverity }
   console.log(`\n${c.bold}hallint${c.reset} scanning ${files.join(", ")}...\n`)
   try {
@@ -77,4 +77,5 @@ function fmt(f: Finding): string {
     if (info)     console.log(`  ${c.dim}${info} info${c.reset}`)
     process.exit(critical > 0 || high > 0 ? 1 : 0)
   } catch (err) { console.error(`${c.red}Error:${c.reset}`, err); process.exit(2) }
-})()
+}
+main()
