@@ -1,5 +1,5 @@
 {
-  "name": "hallint",
+  "name": "@asyncinnovator/hallint",
   "version": "0.1.0",
   "description": "Detect security and quality issues in AI-generated code",
   "main": "./dist/index.js",
@@ -32,7 +32,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hallint-dev/hallint"
+    "url": "git+https://github.com/Asyncinnovator/hallint.git"
   },
   "dependencies": {
     "glob": "^10.3.0",
