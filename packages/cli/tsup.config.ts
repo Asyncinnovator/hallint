@@ -4,8 +4,4 @@ export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs'],
   clean: true,
-  banner: {
-    js: '#!/usr/bin/env node',
-  },
-  outExtension: () => ({ js: '.js' }),
 })

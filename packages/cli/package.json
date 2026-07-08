@@ -1,6 +1,6 @@
 {
   "name": "@asyncinnovator/hallint-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for hallint",
   "bin": {
     "hallint": "dist/index.js"
@@ -12,6 +12,8 @@
   "dependencies": {
     "@asyncinnovator/hallint": "*"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "MIT"
 }
