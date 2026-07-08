@@ -1,6 +1,6 @@
 {
   "name": "@asyncinnovator/hallint",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Detect security and quality issues in AI-generated code",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

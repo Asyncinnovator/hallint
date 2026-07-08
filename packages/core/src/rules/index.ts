@@ -5,7 +5,7 @@ export const hardcodedSecret: Rule = {
   severity: "critical",
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
-  pattern: /(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[=:]\s*["'"'"'][A-Za-z0-9+/=_-]{16,}["'"'"']/i,
+  pattern: /(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[=:]\s*["'`][A-Za-z0-9+/=_-]{16,}["'`]/i,
   message: "Hardcoded secret detected — API key, token, or password in source code",
   fix: "Move to environment variables: process.env.YOUR_SECRET_NAME",
   docs: "https://hallint.dev/rules/hardcoded-secret",
@@ -16,7 +16,7 @@ export const sqlInjection: Rule = {
   severity: "critical",
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
-  pattern: /(?:query|execute|exec|db\.run)\s*\(\s*[`"'"'"'].*?\$\{|["'"'"'`]\s*\+\s*(?:req\.|params\.|body\.|query\.)/,
+  pattern: /(?:query|execute|exec|db\.run)\s*\(\s*["'`].*?\$\{|["'`]\s*\+\s*(?:req\.|params\.|body\.|query\.)/,
   message: "Possible SQL injection — user input interpolated into a query",
   fix: 'Use parameterized queries: db.query("SELECT * FROM users WHERE id = ?", [userId])',
   docs: "https://hallint.dev/rules/sql-injection",
@@ -44,7 +44,7 @@ export const missingAuthCheck: Rule = {
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
-    const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'"'"'`][^"'"'"'`,]+["'"'"'`]\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
+    const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'`][^"'`]+["'`]\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
     lines.forEach((line, i) => {
       if (routePattern.test(line)) {
         const context = lines.slice(Math.max(0, i - 1), i + 2).join(" ")
@@ -72,7 +72,7 @@ export const permissiveCors: Rule = {
   severity: "high",
   languages: ["js", "ts"],
   layer: "regex",
-  pattern: /cors\s*\(\s*\{\s*origin\s*:\s*["'"'"'`]\*["'"'"'`]/,
+  pattern: /cors\s*\(\s*\{\s*origin\s*:\s*["'`]\*["'`]/,
   message: "CORS configured with wildcard origin (*) — allows any domain",
   fix: 'Restrict to specific domains: cors({ origin: "https://yourdomain.com" })',
   docs: "https://hallint.dev/rules/permissive-cors",
@@ -119,7 +119,7 @@ export const httpNotHttps: Rule = {
   severity: "medium",
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
-  pattern: /(?:fetch|axios\.(?:get|post|put|delete|patch)|requests\.(?:get|post))\s*\(\s*["'"'"'`]http:\/\//,
+  pattern: /(?:fetch|axios\.(?:get|post|put|delete|patch)|requests\.(?:get|post))\s*\(\s*["'`]http:\/\//,
   message: "Hardcoded http:// URL — data sent without encryption",
   fix: "Use https:// or move base URLs to environment config.",
   docs: "https://hallint.dev/rules/http-not-https",
