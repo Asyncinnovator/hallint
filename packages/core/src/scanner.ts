@@ -73,11 +73,13 @@ export function scanSource(source: string, filePath: string, config: Omit<ScanCo
 async function resolveFiles(input: string | string[], ignore: string[] = []): Promise<string[]> {
   const patterns = Array.isArray(input) ? input : [input]
   try {
-    const { glob } = await import("glob")
+    const { glob } = await import('glob')
     const results: string[] = []
     for (const pattern of patterns) results.push(...await glob(pattern, { ignore, absolute: true }))
     return [...new Set(results)]
   } catch {
-    return patterns.filter(p => !p.includes("*"))
+    // glob failed — fall back to treating inputs as direct file paths
+    const { existsSync, realpathSync } = await import('fs')
+    return patterns.filter(p => existsSync(p)).map(p => realpathSync(p))
   }
 }
