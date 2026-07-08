@@ -7,4 +7,5 @@ export default defineConfig({
   banner: {
     js: '#!/usr/bin/env node',
   },
+  outExtension: () => ({ js: '.js' }),
 })
