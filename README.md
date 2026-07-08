@@ -40,31 +40,31 @@ npx @asyncinnovator/hallint ./src
 ### Basic scan
 
 ```bash
-npx @asyncinnovator/hallint ./src
+npx @asyncinnovator/hallint-cli ./src
 ```
 
 ### Scan with glob pattern
 
 ```bash
-npx @asyncinnovator/hallint "./src/**/*.ts"
+npx @asyncinnovator/hallint-cli "./src/**/*.ts"
 ```
 
 ### Only show high and critical issues
 
 ```bash
-npx @asyncinnovator/hallint ./src --min-severity high
+npx @asyncinnovator/hallint-cli ./src --min-severity high
 ```
 
 ### Run all rules
 
 ```bash
-npx @asyncinnovator/hallint ./src --rules all
+npx @asyncinnovator/hallint-cli ./src --rules all
 ```
 
 ### Disable color output (for logs/CI)
 
 ```bash
-npx @asyncinnovator/hallint ./src --no-color
+npx @asyncinnovator/hallint-cli ./src --no-color
 ```
 
 ### Options
