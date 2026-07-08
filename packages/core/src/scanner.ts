@@ -35,15 +35,19 @@ function scanFile(filePath: string, source: string, rules: Rule[]): Finding[] {
     if (rule.layer === "regex" && rule.pattern) {
       lines.forEach((line, i) => {
         if (rule.pattern!.test(line)) {
-          findings.push({ ruleId: rule.id, severity: rule.severity, message: rule.message,
-            fix: rule.fix, docs: rule.docs, filePath, line: i + 1, snippet: line.trim() })
+          findings.push({
+            ruleId: rule.id, severity: rule.severity, message: rule.message,
+            fix: rule.fix, docs: rule.docs, filePath, line: i + 1, snippet: line.trim()
+          })
         }
       })
     }
     if (rule.layer === "ast" && rule.match) {
       for (const m of rule.match(source, filePath)) {
-        findings.push({ ruleId: rule.id, severity: rule.severity, message: rule.message,
-          fix: rule.fix, docs: rule.docs, filePath, line: m.line, column: m.column, snippet: m.snippet })
+        findings.push({
+          ruleId: rule.id, severity: rule.severity, message: rule.message,
+          fix: rule.fix, docs: rule.docs, filePath, line: m.line, column: m.column, snippet: m.snippet
+        })
       }
     }
   }
@@ -71,15 +75,26 @@ export function scanSource(source: string, filePath: string, config: Omit<ScanCo
 }
 
 async function resolveFiles(input: string | string[], ignore: string[] = []): Promise<string[]> {
-  const patterns = Array.isArray(input) ? input : [input]
+  const { statSync, existsSync, realpathSync } = await import('fs')
+  const rawPatterns = Array.isArray(input) ? input : [input]
+
+  // Expand bare directory paths into glob patterns so `hallint ./src` works
+  const patterns = rawPatterns.map(p => {
+    try {
+      if (existsSync(p) && statSync(p).isDirectory()) {
+        return p.replace(/\/?$/, '') + '/**/*.{js,jsx,ts,tsx,py}'
+      }
+    } catch { /* fall through */ }
+    return p
+  })
+
   try {
     const { glob } = await import('glob')
     const results: string[] = []
     for (const pattern of patterns) results.push(...await glob(pattern, { ignore, absolute: true }))
     return [...new Set(results)]
   } catch {
-    // glob failed — fall back to treating inputs as direct file paths
-    const { existsSync, realpathSync } = await import('fs')
-    return patterns.filter(p => existsSync(p)).map(p => realpathSync(p))
+    // glob unavailable — fall back to direct file paths only (directories already expanded above)
+    return patterns.filter(p => existsSync(p) && statSync(p).isFile()).map(p => realpathSync(p))
   }
 }

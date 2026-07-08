@@ -16,7 +16,7 @@ export const sqlInjection: Rule = {
   severity: "critical",
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
-  pattern: /(?:query|execute|exec|db\.run)\s*\(\s*["'`].*?\$\{|["'`]\s*\+\s*(?:req\.|params\.|body\.|query\.)/,
+  pattern: /(?:query|execute|exec|db\.run)\s*\(\s*["'`].*?[$]\{|["'`]\s*\+\s*(?:req\.|params\.|body\.|query\.)/,
   message: "Possible SQL injection — user input interpolated into a query",
   fix: 'Use parameterized queries: db.query("SELECT * FROM users WHERE id = ?", [userId])',
   docs: "https://hallint.dev/rules/sql-injection",
@@ -44,7 +44,7 @@ export const missingAuthCheck: Rule = {
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
-    const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'`][^"'`]+["'`]\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
+    const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'`][^"'`]+["'`]\s*(?:,\s*\w+)*\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
     lines.forEach((line, i) => {
       if (routePattern.test(line)) {
         const context = lines.slice(Math.max(0, i - 1), i + 2).join(" ")
@@ -61,7 +61,7 @@ export const xssInnerHTML: Rule = {
   severity: "high",
   languages: ["js", "ts", "jsx", "tsx"],
   layer: "regex",
-  pattern: /\.innerHTML\s*=\s*(?!["'"'"'`]<|["'"'"'`]\s*$)/,
+  pattern: /\.innerHTML\s*=\s*(?!["'`])/,
   message: "Unsanitized string assigned to innerHTML — potential XSS",
   fix: "Use textContent for plain text, or sanitize with DOMPurify first.",
   docs: "https://hallint.dev/rules/xss-innerHTML",
@@ -89,7 +89,7 @@ export const asyncNoCatch: Rule = {
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
-    const asyncFnPattern = /^(?:export\s+)?(?:async\s+function|const\s+\w+\s*=\s*async\s*(?:\([^)]*\)|[^=]+)\s*=>)/
+    const asyncFnPattern = /(?:^(?:export\s+)?(?:async\s+function|const\s+\w+\s*=\s*async\s*(?:\([^)]*\)|[^=]+)\s*=>)|async\s*(?:function\s*\w*\s*)?\([^)]*\)\s*=>|async\s*(?:function\s+\w+\s*)?\()/
     let insideAsync = false
     let braceDepth = 0
     let asyncStartLine = -1
