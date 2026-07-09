@@ -3,14 +3,14 @@
 ```
 ██╗  ██╗ █████╗ ██╗     ██╗     ██╗███╗   ██╗████████╗
 ██║  ██║██╔══██╗██║     ██║     ██║████╗  ██║╚══██╔══╝
-███████║███████║██║     ██║     ██║██╔██╗ ██║   ██║
-██╔══██║██╔══██║██║     ██║     ██║██║╚██╗██║   ██║
-██║  ██║██║  ██║███████╗███████╗██║██║ ╚████║   ██║
-╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝
+███████║███████║██║     ██║     ██║██╔██╗ ██║   ██║   
+██╔══██║██╔══██║██║     ██║     ██║██║╚██╗██║   ██║   
+██║  ██║██║  ██║███████╗███████╗██║██║ ╚████║   ██║   
+╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝   
 ```
 
-**Static analysis for AI-generated code.**  
-Catch the security holes Copilot and Cursor leave behind — before they reach production.
+<b>Static analysis for AI-generated code.</b> <br>
+Catch the security holes Artificial Intelligence leave behind — before they reach production.
 
 [![npm](https://img.shields.io/npm/v/@asyncinnovator/hallint?color=crimson&label=core)](https://www.npmjs.com/package/@asyncinnovator/hallint)
 [![npm](https://img.shields.io/npm/v/@asyncinnovator/hallint-cli?color=crimson&label=cli)](https://www.npmjs.com/package/@asyncinnovator/hallint-cli)
