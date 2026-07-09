@@ -1,6 +1,25 @@
-# hallint
+<div align="center">
 
-Detect security and quality issues in AI-generated code — before they reach production.
+```
+██╗  ██╗ █████╗ ██╗     ██╗     ██╗███╗   ██╗████████╗
+██║  ██║██╔══██╗██║     ██║     ██║████╗  ██║╚══██╔══╝
+███████║███████║██║     ██║     ██║██╔██╗ ██║   ██║
+██╔══██║██╔══██║██║     ██║     ██║██║╚██╗██║   ██║
+██║  ██║██║  ██║███████╗███████╗██║██║ ╚████║   ██║
+╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝
+```
+
+**Static analysis for AI-generated code.**  
+Catch the security holes Copilot and Cursor leave behind — before they reach production.
+
+[![npm](https://img.shields.io/npm/v/@asyncinnovator/hallint?color=crimson&label=core)](https://www.npmjs.com/package/@asyncinnovator/hallint)
+[![npm](https://img.shields.io/npm/v/@asyncinnovator/hallint-cli?color=crimson&label=cli)](https://www.npmjs.com/package/@asyncinnovator/hallint-cli)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+
+</div>
+
+---
 
 AI coding assistants (Copilot, Cursor, etc.) are fast, but they consistently introduce the same classes of bugs: hardcoded secrets, SQL injection, missing auth, unsafe eval. hallint catches them.
 
@@ -28,7 +47,7 @@ npm install @asyncinnovator/hallint
 Or run without installing:
 
 ```bash
-npx @asyncinnovator/hallint ./src
+npx @asyncinnovator/hallint-cli ./src
 ```
 
 **Requirements:** Node.js >= 18
@@ -219,7 +238,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npx @asyncinnovator/hallint ./src --min-severity high
+      - run: npx @asyncinnovator/hallint-cli ./src --min-severity high
 ```
 
 ### Pre-commit hook
@@ -229,7 +248,7 @@ Install [husky](https://github.com/typicode/husky):
 ```bash
 npm install --save-dev husky
 npx husky init
-echo "npx @asyncinnovator/hallint ./src --min-severity high" > .husky/pre-commit
+echo "npx @asyncinnovator/hallint-cli ./src --min-severity high" > .husky/pre-commit
 ```
 
 ---
