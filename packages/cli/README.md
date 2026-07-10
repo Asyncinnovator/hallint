@@ -10,10 +10,6 @@
 
 ## Install
 
-```bash
-npm install -g @asyncinnovator/hallint-cli
-```
-
 Or run without installing:
 
 ```bash
@@ -27,15 +23,15 @@ npx @asyncinnovator/hallint-cli ./src
 ## Usage
 
 ```bash
-hallint [files] [options]
+npx @asyncinnovator/hallint-cli [files] [options]
 ```
 
 `files` accepts directories, file paths, and glob patterns:
 
 ```bash
-hallint ./src
-hallint "./src/**/*.ts"
-hallint ./src/api.ts ./src/auth.ts
+npx @asyncinnovator/hallint-cli ./src
+npx @asyncinnovator/hallint-cli "./src/**/*.ts"
+npx @asyncinnovator/hallint-cli ./src/api.ts ./src/auth.ts
 ```
 
 ---
@@ -44,11 +40,11 @@ hallint ./src/api.ts ./src/auth.ts
 
 | Flag | Description | Default |
 |---|---|---|
-| `--rules <set>` | `recommended` or `all` | `recommended` |
-| `--min-severity <level>` | `critical` · `high` · `medium` · `low` · `info` | `info` |
+| `--rules` | Rule set: `recommended` or `all` | `recommended` |
+| `--min-severity` | Minimum severity: `critical` `high` `medium` `low` `info` | `info` |
 | `--no-color` | Disable colored output | off |
-| `--help`, `-h` | Show help | |
-| `--version`, `-v` | Show version | |
+| `--help` | Show help | |
+| `--version` | Show version | |
 
 ---
 
@@ -56,19 +52,19 @@ hallint ./src/api.ts ./src/auth.ts
 
 ```bash
 # Scan a directory
-hallint ./src
+npx @asyncinnovator/hallint-cli ./src
 
 # Only critical and high findings
-hallint ./src --min-severity high
+npx @asyncinnovator/hallint-cli ./src --min-severity high
 
 # Run all available rules
-hallint ./src --rules all
+npx @asyncinnovator/hallint-cli ./src --rules all
 
 # Disable color (for CI logs)
-hallint ./src --no-color
+npx @asyncinnovator/hallint-cli ./src --no-color
 
 # Glob pattern
-hallint "./src/**/*.ts" --min-severity high
+npx @asyncinnovator/hallint-cli "./src/**/*.ts" --min-severity high
 ```
 
 ---
@@ -100,9 +96,9 @@ Summary: 2 issue(s) in 1 file(s) — 18ms
 
 | Code | Meaning |
 |---|---|
-| `0` | Clean — no issues found |
-| `1` | One or more `critical` or `high` findings |
-| `2` | Unexpected runtime error |
+| `0` | No issues found |
+| `1` | One or more critical or high findings |
+| `2` | Unexpected error |
 
 Exit code `1` on critical/high makes hallint suitable as a hard CI gate.
 
@@ -114,6 +110,8 @@ Exit code `1` on critical/high makes hallint suitable as a hard CI gate.
 name: hallint
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -129,6 +127,8 @@ jobs:
 ```
 
 ## CI — Pre-commit hook
+
+Install [husky](https://github.com/typicode/husky):
 
 ```bash
 npm install --save-dev husky
