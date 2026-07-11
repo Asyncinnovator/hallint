@@ -1,5 +1,5 @@
 // hallint.config.ts — project-level configuration (place in your project root)
-import type { ScanConfig } from "hallint"
+import type { ScanConfig } from "@asyncinnovator/hallint"
 
 const config: Omit<ScanConfig, "files"> = {
   rules: "recommended",

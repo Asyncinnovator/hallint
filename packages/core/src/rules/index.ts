@@ -39,7 +39,7 @@ export const missingAuthCheck: Rule = {
   languages: ["js", "ts"],
   layer: "ast",
   message: "Route handler may be missing authentication middleware",
-  fix: "Add auth middleware: router.get('/route', authenticate, handler)",
+  fix: "Add auth middleware: router.get('/route', authenticate, handler), or mark intentionally public routes with // public",
   docs: "https://hallint.dev/rules/missing-auth-check",
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
@@ -49,7 +49,8 @@ export const missingAuthCheck: Rule = {
       if (routePattern.test(line)) {
         const context = lines.slice(Math.max(0, i - 1), i + 2).join(" ")
         const hasAuth = /\b(?:auth|authenticate|requireAuth|isAuthenticated|protect|verifyToken|ensureLoggedIn)\b/.test(context)
-        if (!hasAuth) matches.push({ line: i + 1, snippet: line.trim() })
+        const isPublic = /\/\/\s*(?:hallint-)?public\b|\/\*\s*(?:hallint-)?public\s*\*\//i.test(context)
+        if (!hasAuth && !isPublic) matches.push({ line: i + 1, snippet: line.trim() })
       }
     })
     return matches
