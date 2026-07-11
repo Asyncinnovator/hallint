@@ -45,4 +45,16 @@ describe("async-no-catch", () => {
 describe("missing-auth-check", () => {
   it("flags route with no auth", () => expect(findingsFor("missing-auth-check", fixture("missing-auth-check", "bad")).length).toBeGreaterThan(0))
   it("does not flag route with auth middleware", () => expect(findingsFor("missing-auth-check", fixture("missing-auth-check", "good"))).toHaveLength(0))
+  it("does not flag routes marked as intentionally public", () => {
+    const source = `
+      // public
+      app.get('/health', (_req, res) => res.send('ok'))
+
+      router.post('/webhook', /* hallint-public */ async (req, res) => {
+        res.sendStatus(204)
+      })
+    `
+
+    expect(findingsFor("missing-auth-check", source)).toHaveLength(0)
+  })
 })

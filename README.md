@@ -189,6 +189,19 @@ findings.forEach(f => console.log(f.ruleId, f.message))
 | `async-no-catch` | medium | `async` functions with no `try/catch` or `.catch()` |
 | `http-not-https` | medium | Hardcoded `http://` URLs in fetch or axios calls |
 
+Intentionally public route handlers can be excluded from `missing-auth-check`
+with a nearby `// public`, `// hallint-public`, or `/* hallint-public */`
+marker:
+
+```ts
+// public
+app.get('/health', (_req, res) => res.send('ok'))
+
+router.post('/webhook', /* hallint-public */ async (req, res) => {
+  res.sendStatus(204)
+})
+```
+
 ---
 
 ## Configuration
