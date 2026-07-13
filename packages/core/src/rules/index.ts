@@ -1,14 +1,34 @@
 import type { Rule } from "../types"
 
+// Pass 1: assignment-style secrets (api_key = "...", password: "...")
+const SECRET_ASSIGNMENT = /(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[=:]\s*["'`][A-Za-z0-9+/=_-]{16,}["'`]/i
+
+// Pass 2: well-known secret prefixes used verbatim anywhere in the line.
+// These are provider-issued formats with unambiguous prefixes, so no assignment
+// context is needed — their presence in source is always a leak.
+const SECRET_PREFIX = /["'`](?:ghp_|ghs_|github_pat_|sk-[A-Za-z0-9]{20,}|xoxb-|xoxp-|xoxa-|AKIA[0-9A-Z]{16}|ya29\.|AIza[0-9A-Za-z_-]{35})[A-Za-z0-9_-]*["'`]/
+
 export const hardcodedSecret: Rule = {
   id: "hardcoded-secret",
   severity: "critical",
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
-  pattern: /(?:api[_-]?key|secret|token|password|passwd|pwd)\s*[=:]\s*["'`][A-Za-z0-9+/=_-]{16,}["'`]/i,
   message: "Hardcoded secret detected — API key, token, or password in source code",
   fix: "Move to environment variables: process.env.YOUR_SECRET_NAME",
   docs: "https://hallint.dev/rules/hardcoded-secret",
+  match(source, _filePath) {
+    const matches: { line: number; snippet?: string }[] = []
+    const lines = source.split("\n")
+    lines.forEach((line, i) => {
+      // Skip comments and env-var reads — not leaks
+      const trimmed = line.trim()
+      if (/^\s*(?:\/\/|#)/.test(line)) return
+      if (/process\.env\.|os\.environ/.test(line)) return
+      if (SECRET_ASSIGNMENT.test(line) || SECRET_PREFIX.test(line))
+        matches.push({ line: i + 1, snippet: trimmed })
+    })
+    return matches
+  },
 }
 
 export const sqlInjection: Rule = {

@@ -32,7 +32,7 @@ function scanFile(filePath: string, source: string, rules: Rule[]): Finding[] {
   const lines = source.split("\n")
   for (const rule of rules) {
     if (!rule.languages.includes(lang)) continue
-    if (rule.layer === "regex" && rule.pattern) {
+    if (rule.pattern && !rule.match) {
       lines.forEach((line, i) => {
         if (rule.pattern!.test(line)) {
           findings.push({
@@ -42,7 +42,7 @@ function scanFile(filePath: string, source: string, rules: Rule[]): Finding[] {
         }
       })
     }
-    if (rule.layer === "ast" && rule.match) {
+    if (rule.match) {
       for (const m of rule.match(source, filePath)) {
         findings.push({
           ruleId: rule.id, severity: rule.severity, message: rule.message,
