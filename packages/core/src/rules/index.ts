@@ -37,7 +37,7 @@ export const sqlInjection: Rule = {
   languages: ["js", "ts", "jsx", "tsx", "py"],
   layer: "regex",
   pattern: /(?:query|execute|exec|db\.run)\s*\(\s*["'`].*?[$]\{|["'`]\s*\+\s*(?:req\.|params\.|body\.|query\.)/,
-  message: "Possible SQL injection — user input interpolated into a query",
+  message: "Possible SQL injection — user input directly concatenated or interpolated into a query string",
   fix: 'Use parameterized queries: db.query("SELECT * FROM users WHERE id = ?", [userId])',
   docs: "https://hallint.dev/rules/sql-injection",
 }
