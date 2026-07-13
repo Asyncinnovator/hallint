@@ -101,7 +101,7 @@ Scans a source string directly without touching the file system.
 
 | Rule | Severity | What it catches |
 |---|---|---|
-| `hardcoded-secret` | critical | API keys, tokens, passwords in source |
+| `hardcoded-secret` | critical | API keys, tokens, and known token prefixes (`ghp_`, `sk-`, `AKIA`, `xoxb-`, and more) |
 | `sql-injection` | critical | User input interpolated into SQL queries |
 | `unsafe-eval` | critical | `eval()` or `new Function()` with dynamic input |
 | `missing-auth-check` | high | Route handlers with no auth middleware |
