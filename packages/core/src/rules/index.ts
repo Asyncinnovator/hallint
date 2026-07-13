@@ -79,6 +79,19 @@ export const permissiveCors: Rule = {
   docs: "https://hallint.dev/rules/permissive-cors",
 }
 
+// Strip inline string literals from a line before counting braces, so that
+// `{` / `}` inside quotes or template expressions don't throw off the depth counter.
+// Handles single-line strings and template literals; multiline templates are left as-is
+// (rare in practice). This is a heuristic — AST-based detection is planned for v0.2.
+function stripStrings(line: string): string {
+  return line
+    .replace(/'[^'\\]*(?:\\.[^'\\]*)*'/g, "''")
+    .replace(/"[^"\\]*(?:\\.[^"\\]*)*"/g, '""')
+    .replace(/`[^`\\$]*(?:(?:\\.|\$(?!\{))[^`\\$]*)*`/g, "``")
+    // Collapse ${...} expressions that weren't part of a full template (residual fragments)
+    .replace(/\$\{[^}]*\}/g, "")
+}
+
 export const asyncNoCatch: Rule = {
   id: "async-no-catch",
   severity: "medium",
@@ -101,8 +114,9 @@ export const asyncNoCatch: Rule = {
       }
       if (insideAsync) {
         bodyLines.push(line)
-        braceDepth += (line.match(/\{/g) || []).length
-        braceDepth -= (line.match(/\}/g) || []).length
+        const stripped = stripStrings(line)
+        braceDepth += (stripped.match(/\{/g) || []).length
+        braceDepth -= (stripped.match(/\}/g) || []).length
         if (braceDepth <= 0 && bodyLines.length > 1) {
           const body = bodyLines.join("\n")
           if (/\bawait\b/.test(body) && !/\btry\b[\s\S]*\bcatch\b|\.catch\s*\(/.test(body))
