@@ -67,9 +67,15 @@ export const missingAuthCheck: Rule = {
     const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'`][^"'`]+["'`]\s*(?:,\s*\w+)*\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
     lines.forEach((line, i) => {
       if (routePattern.test(line)) {
-        const context = lines.slice(Math.max(0, i - 1), i + 2).join(" ")
-        const hasAuth = /\b(?:auth|authenticate|requireAuth|isAuthenticated|protect|verifyToken|ensureLoggedIn)\b/.test(context)
-        const isPublic = /\/\/\s*(?:hallint-)?public\b|\/\*\s*(?:hallint-)?public\s*\*\//i.test(context)
+        // Look up to 3 lines above + 1 line below for auth middleware and public markers.
+        // Strip comment-only lines before running the auth check so that words like
+        // "auth" or "authenticate" appearing in comment prose don't produce false negatives.
+        const contextLines = lines.slice(Math.max(0, i - 3), i + 2)
+        const codeLines = contextLines.filter(l => !/^\s*(?:\/\/|#)/.test(l))
+        const hasAuth = /\b(?:auth|authenticate|requireAuth|isAuthenticated|protect|verifyToken|ensureLoggedIn)\b/.test(codeLines.join(" "))
+        // Public markers are intentionally in comments — check the full context for those.
+        const fullContext = contextLines.join(" ")
+        const isPublic = /\/\/\s*(?:hallint-)?public\b|\/\*\s*(?:hallint-)?public\s*\*\//i.test(fullContext)
         if (!hasAuth && !isPublic) matches.push({ line: i + 1, snippet: line.trim() })
       }
     })
