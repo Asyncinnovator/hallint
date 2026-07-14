@@ -24,7 +24,13 @@ if (args.includes("--help") || args.includes("-h") || args.length === 0) {
   process.exit(0)
 }
 
-if (args.includes("--version") || args.includes("-v")) { console.log("0.1.0"); process.exit(0) }
+if (args.includes("--version") || args.includes("-v")) {
+  // Read version from package.json at runtime so it never drifts from the published version
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { version } = require("@asyncinnovator/hallint/package.json") as { version: string }
+  console.log(`hallint v${version}`)
+  process.exit(0)
+}
 
 const noColor = args.includes("--no-color")
 const rulesIdx = args.indexOf("--rules")
@@ -51,7 +57,7 @@ function fmt(f: Finding): string {
   const sev = `${sevColor(f.severity)}${f.severity.toUpperCase()}${c.reset}`
   const lines = [`  ${c.bold}${loc}${c.reset} ${sev} ${c.dim}[${f.ruleId}]${c.reset}`, `  ${f.message}`]
   if (f.snippet) lines.push(`  ${c.dim}> ${f.snippet}${c.reset}`)
-  if (f.fix)     lines.push(`  ${c.cyan}fix: ${f.fix}${c.reset}`)
+  if (f.fix) lines.push(`  ${c.cyan}fix: ${f.fix}${c.reset}`)
   return lines.join("\n")
 }
 
@@ -71,10 +77,10 @@ async function main() {
     const total = result.findings.length
     console.log(`${c.bold}Summary:${c.reset} ${total} issue(s) in ${result.scannedFiles.length} file(s) — ${result.durationMs}ms`)
     if (critical) console.log(`  ${c.red}${critical} critical${c.reset}`)
-    if (high)     console.log(`  ${c.red}${high} high${c.reset}`)
-    if (medium)   console.log(`  ${c.yellow}${medium} medium${c.reset}`)
-    if (low)      console.log(`  ${c.blue}${low} low${c.reset}`)
-    if (info)     console.log(`  ${c.dim}${info} info${c.reset}`)
+    if (high) console.log(`  ${c.red}${high} high${c.reset}`)
+    if (medium) console.log(`  ${c.yellow}${medium} medium${c.reset}`)
+    if (low) console.log(`  ${c.blue}${low} low${c.reset}`)
+    if (info) console.log(`  ${c.dim}${info} info${c.reset}`)
     process.exit(critical > 0 || high > 0 ? 1 : 0)
   } catch (err) { console.error(`${c.red}Error:${c.reset}`, err); process.exit(2) }
 }
