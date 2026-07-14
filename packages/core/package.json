@@ -1,6 +1,6 @@
 {
   "name": "@asyncinnovator/hallint",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Detect security and quality issues in AI-generated code",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -10,7 +10,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"

@@ -1,9 +1,12 @@
 {
   "name": "@asyncinnovator/hallint-cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "CLI for hallint",
   "bin": {
     "hallint": "dist/index.js"
+  },
+  "exports": {
+    "./package.json": "./package.json"
   },
   "main": "./dist/index.js",
   "scripts": {
