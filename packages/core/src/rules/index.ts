@@ -15,7 +15,7 @@ export const hardcodedSecret: Rule = {
   layer: "regex",
   message: "Hardcoded secret detected — API key, token, or password in source code",
   fix: "Move to environment variables: process.env.YOUR_SECRET_NAME",
-  docs: "https://hallint.dev/rules/hardcoded-secret",
+  docs: "https://github.com/Asyncinnovator/hallint",
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
@@ -39,7 +39,7 @@ export const sqlInjection: Rule = {
   pattern: /(?:query|execute|exec|db\.run)\s*\(\s*["'`].*?[$]\{|["'`]\s*\+\s*(?:req\.|params\.|body\.|query\.)/,
   message: "Possible SQL injection — user input directly concatenated or interpolated into a query string",
   fix: 'Use parameterized queries: db.query("SELECT * FROM users WHERE id = ?", [userId])',
-  docs: "https://hallint.dev/rules/sql-injection",
+  docs: "https://github.com/Asyncinnovator/hallint",
 }
 
 export const unsafeEval: Rule = {
@@ -50,7 +50,7 @@ export const unsafeEval: Rule = {
   pattern: /\beval\s*\(|new\s+Function\s*\(/,
   message: "Unsafe eval() or new Function() — may execute attacker-controlled code",
   fix: "Avoid eval(). Use JSON.parse() for data, or a sandboxed interpreter.",
-  docs: "https://hallint.dev/rules/unsafe-eval",
+  docs: "https://github.com/Asyncinnovator/hallint",
 }
 
 export const missingAuthCheck: Rule = {
@@ -60,7 +60,7 @@ export const missingAuthCheck: Rule = {
   layer: "ast",
   message: "Route handler may be missing authentication middleware",
   fix: "Add auth middleware: router.get('/route', authenticate, handler), or mark intentionally public routes with // public",
-  docs: "https://hallint.dev/rules/missing-auth-check",
+  docs: "https://github.com/Asyncinnovator/hallint",
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
@@ -91,7 +91,7 @@ export const xssInnerHTML: Rule = {
   pattern: /\.innerHTML\s*=\s*(?!["'`])/,
   message: "Unsanitized string assigned to innerHTML — potential XSS",
   fix: "Use textContent for plain text, or sanitize with DOMPurify first.",
-  docs: "https://hallint.dev/rules/xss-innerHTML",
+  docs: "https://github.com/Asyncinnovator/hallint",
 }
 
 export const permissiveCors: Rule = {
@@ -102,7 +102,7 @@ export const permissiveCors: Rule = {
   pattern: /cors\s*\(\s*\{\s*origin\s*:\s*["'`]\*["'`]/,
   message: "CORS configured with wildcard origin (*) — allows any domain",
   fix: 'Restrict to specific domains: cors({ origin: "https://yourdomain.com" })',
-  docs: "https://hallint.dev/rules/permissive-cors",
+  docs: "https://github.com/Asyncinnovator/hallint",
 }
 
 // Strip inline string literals from a line before counting braces, so that
@@ -125,7 +125,7 @@ export const asyncNoCatch: Rule = {
   layer: "ast",
   message: "async function has no error handling — unhandled rejections can crash the process",
   fix: "Wrap await calls in try/catch or add a .catch() handler.",
-  docs: "https://hallint.dev/rules/async-no-catch",
+  docs: "https://github.com/Asyncinnovator/hallint",
   match(source, _filePath) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
@@ -163,7 +163,7 @@ export const httpNotHttps: Rule = {
   pattern: /(?:fetch|axios\.(?:get|post|put|delete|patch)|requests\.(?:get|post))\s*\(\s*["'`]http:\/\//,
   message: "Hardcoded http:// URL — data sent without encryption",
   fix: "Use https:// or move base URLs to environment config.",
-  docs: "https://hallint.dev/rules/http-not-https",
+  docs: "https://github.com/Asyncinnovator/hallint",
 }
 
 export const allRules: Rule[] = [
