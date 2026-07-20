@@ -58,3 +58,100 @@ describe("missing-auth-check", () => {
     expect(findingsFor("missing-auth-check", source)).toHaveLength(0)
   })
 })
+
+
+// ─── hallint-disable suppression ──────────────────────────────────────────────
+
+describe("hallint-disable suppression", () => {
+  const rules = allRules
+
+  function findings(source: string) {
+    return scanSource(source, "test.ts", { rules })
+  }
+
+  it("inline disable suppresses all rules on that line", () => {
+    const src = `const apiKey = "sk-abc123abc123abc123abc" // hallint-disable`
+    expect(findings(src)).toHaveLength(0)
+  })
+
+  it("inline disable with rule id suppresses only that rule", () => {
+    const src = `const apiKey = "sk-abc123abc123abc123abc" // hallint-disable hardcoded-secret`
+    expect(findings(src)).toHaveLength(0)
+  })
+
+  it("inline disable with wrong rule id does NOT suppress", () => {
+    const src = `const apiKey = "sk-abc123abc123abc123abc" // hallint-disable sql-injection`
+    expect(findings(src).some(f => f.ruleId === "hardcoded-secret")).toBe(true)
+  })
+
+  it("disable-next-line suppresses all rules on the following line", () => {
+    const src = [
+      `// hallint-disable-next-line`,
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+    ].join("\n")
+    expect(findings(src)).toHaveLength(0)
+  })
+
+  it("disable-next-line with rule id suppresses only that rule on next line", () => {
+    const src = [
+      `// hallint-disable-next-line hardcoded-secret`,
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+    ].join("\n")
+    expect(findings(src)).toHaveLength(0)
+  })
+
+  it("disable-next-line does NOT suppress two lines below", () => {
+    const src = [
+      `// hallint-disable-next-line`,
+      `const x = 1`,
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+    ].join("\n")
+    expect(findings(src).some(f => f.ruleId === "hardcoded-secret")).toBe(true)
+  })
+
+  it("disable-block / enable-block suppresses all rules in range", () => {
+    const src = [
+      `// hallint-disable-block`,
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+      `eval(userInput)`,
+      `// hallint-enable-block`,
+    ].join("\n")
+    expect(findings(src)).toHaveLength(0)
+  })
+
+  it("disable-block with rule id suppresses only that rule in range", () => {
+    const src = [
+      `// hallint-disable-block hardcoded-secret`,
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+      `// hallint-enable-block`,
+    ].join("\n")
+    expect(findings(src).some(f => f.ruleId === "hardcoded-secret")).toBe(false)
+  })
+
+  it("disable-block with rule id does NOT suppress other rules in range", () => {
+    const src = [
+      `// hallint-disable-block hardcoded-secret`,
+      `eval(userInput)`,
+      `// hallint-enable-block`,
+    ].join("\n")
+    expect(findings(src).some(f => f.ruleId === "unsafe-eval")).toBe(true)
+  })
+
+  it("unclosed disable-block suppresses to EOF", () => {
+    const src = [
+      `// hallint-disable-block`,
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+    ].join("\n")
+    expect(findings(src)).toHaveLength(0)
+  })
+
+  it("lines outside block are still flagged", () => {
+    const src = [
+      `const apiKey = "sk-abc123abc123abc123abc"`,
+      `// hallint-disable-block`,
+      `const other = 1`,
+      `// hallint-enable-block`,
+    ].join("\n")
+    expect(findings(src).some(f => f.ruleId === "hardcoded-secret")).toBe(true)
+  })
+})
