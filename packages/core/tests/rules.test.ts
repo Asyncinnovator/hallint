@@ -155,3 +155,33 @@ describe("hallint-disable suppression", () => {
     expect(findings(src).some(f => f.ruleId === "hardcoded-secret")).toBe(true)
   })
 })
+
+
+describe("publicRoutes allowlist", () => {
+  it("does not flag routes declared in publicRoutes", () => {
+    const src = `app.get('/health', async (req, res) => { res.send('ok') })`
+    const result = scanSource(src, "test.ts", {
+      rules: allRules,
+      publicRoutes: ["/health"]
+    })
+    expect(result.some(f => f.ruleId === "missing-auth-check")).toBe(false)
+  })
+
+  it("still flags routes not in the allowlist", () => {
+    const src = `app.get('/users', async (req, res) => { res.send(users) })`
+    const result = scanSource(src, "test.ts", {
+      rules: allRules,
+      publicRoutes: ["/health"]
+    })
+    expect(result.some(f => f.ruleId === "missing-auth-check")).toBe(true)
+  })
+
+  it("supports regex patterns in publicRoutes", () => {
+    const src = `app.get('/api/docs/intro', async (req, res) => { res.send(doc) })`
+    const result = scanSource(src, "test.ts", {
+      rules: allRules,
+      publicRoutes: [/^\/api\/docs/]
+    })
+    expect(result.some(f => f.ruleId === "missing-auth-check")).toBe(false)
+  })
+})

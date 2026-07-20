@@ -13,7 +13,7 @@ export interface Rule {
   pattern?: RegExp
   fix?: string
   docs?: string
-  match?: (source: string, filePath: string) => RuleMatch[]
+  match?: (source: string, filePath: string, config?: ScanConfig) => RuleMatch[]
 }
 
 export interface RuleMatch {
@@ -50,6 +50,13 @@ export interface ScanConfig {
   llm?: LLMConfig
   minSeverity?: Severity
   ignore?: string[]
+  /**
+   * Route paths that are intentionally public and should not be flagged
+   * by the missing-auth-check rule.
+   * Supports exact strings and regex patterns.
+   * @example publicRoutes: ["/health", "/login", /^\/api\/docs/]
+   */
+  publicRoutes?: Array<string | RegExp>
 }
 
 export interface ScanResult {

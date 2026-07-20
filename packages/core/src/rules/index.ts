@@ -59,25 +59,32 @@ export const missingAuthCheck: Rule = {
   languages: ["js", "ts"],
   layer: "ast",
   message: "Route handler may be missing authentication middleware",
-  fix: "Add auth middleware: router.get('/route', authenticate, handler), or mark intentionally public routes with // public",
+  fix: "Add auth middleware: router.get('/route', authenticate, handler), or declare the path in publicRoutes config",
   docs: "https://github.com/Asyncinnovator/hallint",
-  match(source, _filePath) {
+  match(source, _filePath, config) {
     const matches: { line: number; snippet?: string }[] = []
     const lines = source.split("\n")
-    const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'`][^"'`]+["'`]\s*(?:,\s*\w+)*\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
+    const routePattern = /(?:app|router)\.(get|post|put|patch|delete)\s*\(\s*["'`]([^"'`]+)["'`]\s*(?:,\s*\w+)*\s*,\s*(?:async\s*)?\([^)]*\)\s*=>/
     lines.forEach((line, i) => {
-      if (routePattern.test(line)) {
-        // Look up to 3 lines above + 1 line below for auth middleware and public markers.
-        // Strip comment-only lines before running the auth check so that words like
-        // "auth" or "authenticate" appearing in comment prose don't produce false negatives.
-        const contextLines = lines.slice(Math.max(0, i - 3), i + 2)
-        const codeLines = contextLines.filter(l => !/^\s*(?:\/\/|#)/.test(l))
-        const hasAuth = /\b(?:auth|authenticate|requireAuth|isAuthenticated|protect|verifyToken|ensureLoggedIn)\b/.test(codeLines.join(" "))
-        // Public markers are intentionally in comments — check the full context for those.
-        const fullContext = contextLines.join(" ")
-        const isPublic = /\/\/\s*(?:hallint-)?public\b|\/\*\s*(?:hallint-)?public\s*\*\//i.test(fullContext)
-        if (!hasAuth && !isPublic) matches.push({ line: i + 1, snippet: line.trim() })
+      const routeMatch = routePattern.exec(line)
+      if (!routeMatch) return
+
+      const routePath = routeMatch[2]
+
+      // Check config-level public routes allowlist
+      if (config?.publicRoutes?.length) {
+        const isAllowlisted = config.publicRoutes.some(entry =>
+          typeof entry === "string" ? entry === routePath : entry.test(routePath)
+        )
+        if (isAllowlisted) return
       }
+
+      const contextLines = lines.slice(Math.max(0, i - 3), i + 2)
+      const codeLines = contextLines.filter(l => !/^\s*(?:\/\/|#)/.test(l))
+      const hasAuth = /\b(?:auth|authenticate|requireAuth|isAuthenticated|protect|verifyToken|ensureLoggedIn)\b/.test(codeLines.join(" "))
+      const fullContext = contextLines.join(" ")
+      const isPublic = /\/\/\s*(?:hallint-)?public\b|\/\*\s*(?:hallint-)?public\s*\*\//i.test(fullContext)
+      if (!hasAuth && !isPublic) matches.push({ line: i + 1, snippet: line.trim() })
     })
     return matches
   },

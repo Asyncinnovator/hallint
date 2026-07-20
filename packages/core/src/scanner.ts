@@ -135,7 +135,7 @@ function isSuppressed(
 
 // ─── Scanner ──────────────────────────────────────────────────────────────────
 
-function scanFile(filePath: string, source: string, rules: Rule[]): Finding[] {
+function scanFile(filePath: string, source: string, rules: Rule[], config: ScanConfig): Finding[] {
   const lang = extToLanguage(filePath)
   if (!lang) return []
   const findings: Finding[] = []
@@ -157,7 +157,7 @@ function scanFile(filePath: string, source: string, rules: Rule[]): Finding[] {
       })
     }
     if (rule.match) {
-      for (const m of rule.match(source, filePath)) {
+      for (const m of rule.match(source, filePath, config)) {
         if (isSuppressed(m.line, rule.id, suppressedLines, blockSuppressed)) continue
         findings.push({
           ruleId: rule.id, severity: rule.severity, message: rule.message,
@@ -178,7 +178,7 @@ export async function scan(config: ScanConfig): Promise<ScanResult> {
   for (const filePath of filePaths) {
     let source: string
     try { source = readFileSync(filePath, "utf8") } catch { continue }
-    allFindings.push(...scanFile(filePath, source, rules).filter(f => meetsMinSeverity(f, minSeverity)))
+    allFindings.push(...scanFile(filePath, source, rules, config).filter(f => meetsMinSeverity(f, minSeverity)))
   }
   const summary = emptyCount()
   for (const f of allFindings) summary[f.severity]++
@@ -186,7 +186,7 @@ export async function scan(config: ScanConfig): Promise<ScanResult> {
 }
 
 export function scanSource(source: string, filePath: string, config: Omit<ScanConfig, "files"> = {}): Finding[] {
-  return scanFile(filePath, source, resolveRules(config.rules))
+  return scanFile(filePath, source, resolveRules(config.rules), { ...config, files: [filePath] })
 }
 
 async function resolveFiles(input: string | string[], ignore: string[] = []): Promise<string[]> {
