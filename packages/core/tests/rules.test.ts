@@ -185,3 +185,8 @@ describe("publicRoutes allowlist", () => {
     expect(result.some(f => f.ruleId === "missing-auth-check")).toBe(false)
   })
 })
+
+describe("jwt-in-localstorage", () => {
+  it("flags JWT stored in localStorage", () => expect(findingsFor("jwt-in-localstorage", fixture("jwt-in-localstorage", "bad")).length).toBeGreaterThan(0))
+  it("does not flag non-auth localStorage usage", () => expect(findingsFor("jwt-in-localstorage", fixture("jwt-in-localstorage", "good"))).toHaveLength(0))
+})

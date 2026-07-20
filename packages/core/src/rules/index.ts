@@ -173,9 +173,21 @@ export const httpNotHttps: Rule = {
   docs: "https://github.com/Asyncinnovator/hallint",
 }
 
+export const jwtInLocalStorage: Rule = {
+  id: "jwt-in-localstorage",
+  severity: "high",
+  languages: ["js", "ts", "jsx", "tsx"],
+  layer: "regex",
+  pattern: /localStorage\s*\.\s*setItem\s*\(\s*["'`][^"'`]*(?:token|jwt|auth|session|access)[^"'`]*["'`]/i,
+  message: "JWT or auth token stored in localStorage — vulnerable to XSS token theft",
+  fix: "Use httpOnly cookies instead: store tokens server-side and set them via Set-Cookie header with httpOnly and Secure flags.",
+  docs: "https://github.com/Asyncinnovator/hallint",
+}
+
+
 export const allRules: Rule[] = [
   hardcodedSecret, sqlInjection, unsafeEval, missingAuthCheck,
-  xssInnerHTML, permissiveCors, asyncNoCatch, httpNotHttps,
+  xssInnerHTML, permissiveCors, asyncNoCatch, httpNotHttps, jwtInLocalStorage,
 ]
 
 export const recommendedRules: Rule[] = allRules
