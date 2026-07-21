@@ -35,8 +35,6 @@ function emptyCount(): Record<Severity, number> {
 //   hallint-disable-block rule-id          → suppress specific rule until hallint-enable-block
 //   hallint-enable-block                   → end block suppression
 
-type BlockSuppression = { rules: string[] | null }  // null = all rules
-
 function buildSuppressionIndex(lines: string[]): {
   suppressedLines: Map<number, string[] | null>   // 1-based line → null=all, array=specific
   blockSuppressed: (line: number, ruleId: string) => boolean
@@ -44,8 +42,6 @@ function buildSuppressionIndex(lines: string[]): {
   // Per-line suppressions (1-based)
   const suppressedLines = new Map<number, string[] | null>()
 
-  // Block suppression state
-  const activeBlocks: BlockSuppression[] = []
   // line → list of blocks starting at that line (processed as we iterate)
   // We'll compute block membership on the fly via a boolean check closure
 
@@ -169,6 +165,7 @@ function scanFile(filePath: string, source: string, rules: Rule[], config: ScanC
   return findings
 }
 
+// replace the existing scan() function with this:
 export async function scan(config: ScanConfig): Promise<ScanResult> {
   const start = Date.now()
   const rules = resolveRules(config.rules)
@@ -180,6 +177,22 @@ export async function scan(config: ScanConfig): Promise<ScanResult> {
     try { source = readFileSync(filePath, "utf8") } catch { continue }
     allFindings.push(...scanFile(filePath, source, rules, config).filter(f => meetsMinSeverity(f, minSeverity)))
   }
+
+  // LLM enrichment — opt-in, never throws, never affects exit code
+  if (config.llm) {
+    const { createLLMProvider } = await import("./llm/index")
+    const provider = createLLMProvider(config.llm)
+    await Promise.all(
+      allFindings.map(async finding => {
+        try {
+          finding.llmExplanation = await provider.explain(finding)
+        } catch {
+          // silently skip — finding is still returned without llmExplanation
+        }
+      })
+    )
+  }
+
   const summary = emptyCount()
   for (const f of allFindings) summary[f.severity]++
   return { findings: allFindings, scannedFiles: filePaths, durationMs: Date.now() - start, summary }
