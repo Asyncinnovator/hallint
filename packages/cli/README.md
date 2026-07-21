@@ -10,6 +10,10 @@
 
 ## Install
 
+```bash
+npm install -g @asyncinnovator/hallint-cli
+```
+
 Or run without installing:
 
 ```bash
@@ -83,11 +87,44 @@ hallint scanning ./src...
   users.ts:31  HIGH  [missing-auth-check]
   Route handler may be missing authentication middleware
   > router.get("/users", async (req, res) => {
-  fix: Add auth middleware: router.get('/route', authenticate, handler)
+  fix: Add auth middleware: router.get('/route', authenticate, handler), or declare the path in publicRoutes config
 
-Summary: 2 issue(s) in 1 file(s) — 18ms
+  users.ts:45  HIGH  [jwt-in-localstorage]
+  JWT or auth token stored in localStorage — vulnerable to XSS token theft
+  > localStorage.setItem('token', jwtToken)
+  fix: Use httpOnly cookies instead
+
+  users.ts:52  HIGH  [swallowed-error]
+  Empty or near-empty catch block — exception is silently discarded
+  > } catch (e) {
+  fix: Log the error or rethrow it: catch (e) { logger.error(e); throw e }
+
+Summary: 4 issue(s) in 1 file(s) — 18ms
   2 critical
-  1 high
+  2 high
+```
+
+---
+
+## Inline Suppression
+
+Suppress specific findings without removing code:
+
+```ts
+// Suppress all rules on this line
+const key = "sk-abc123abc123abc123abc"  // hallint-disable
+
+// Suppress a specific rule
+const key = "sk-abc123abc123abc123abc"  // hallint-disable hardcoded-secret
+
+// Suppress next line
+// hallint-disable-next-line sql-injection
+const q = db.query("SELECT * FROM users WHERE id = " + id)
+
+// Suppress a block
+// hallint-disable-block
+eval(userInput)
+// hallint-enable-block
 ```
 
 ---
@@ -124,16 +161,6 @@ jobs:
         with:
           node-version: 20
       - run: npx @asyncinnovator/hallint-cli ./src --min-severity high
-```
-
-## CI — Pre-commit hook
-
-Install [husky](https://github.com/typicode/husky):
-
-```bash
-npm install --save-dev husky
-npx husky init
-echo "npx @asyncinnovator/hallint-cli ./src --min-severity high" > .husky/pre-commit
 ```
 
 ---

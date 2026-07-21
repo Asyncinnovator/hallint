@@ -30,7 +30,8 @@ AI coding assistants are fast, but they repeatedly introduce the same classes of
 - [Library Usage](#library-usage)
 - [Rules](#rules)
 - [Inline Suppression](#inline-suppression)
-- [Public Route Markers](#public-route-markers)
+- [Public Route Allowlist](#public-route-allowlist)
+- [LLM Layer](#llm-layer)
 - [Custom Rules](#custom-rules)
 - [CI Integration](#ci-integration)
 - [Contributing](#contributing)
@@ -45,6 +46,7 @@ Standard linters (ESLint, Pylint) catch style violations and common logic errors
 - **False-confidence patterns** — auth middleware wired up incorrectly but looking correct at a glance
 - **Context blindness** — AI completes a function without knowing what the surrounding architecture expects
 - **Hardcoded credentials** — the most common and fastest-shipped AI mistake
+- **Silent failures** — empty catch blocks and swallowed auth errors that make broken code look like working code
 
 hallint targets these patterns specifically, with rules tuned to what AI assistants actually get wrong.
 
@@ -76,8 +78,6 @@ If `hallint ./src` throws `command not found` or a PowerShell `CommandNotFoundEx
 | npm script | add `"lint:ai": "hallint ./src"` to `package.json` scripts, run `npm run lint:ai` |
 | Local bin (Windows) | `.\node_modules\.bin\hallint .\src` |
 
-The global install is the simplest fix if you want `hallint` as a standalone command.
-
 ---
 
 ## CLI Usage
@@ -106,7 +106,7 @@ src/routes/admin.ts
   src/routes/admin.ts:7 HIGH [missing-auth-check]
   Route handler may be missing authentication middleware
   > router.post('/admin/delete', async (req, res) => {
-  fix: Add auth middleware: router.get('/route', authenticate, handler), or mark intentionally public routes with // public
+  fix: Add auth middleware: router.get('/route', authenticate, handler), or declare the path in publicRoutes config
 src/utils/sandbox.ts
   src/utils/sandbox.ts:3 MEDIUM [async-no-catch]
   async function has no error handling — unhandled rejections can crash the process
@@ -229,13 +229,14 @@ console.log(findings)
 
 ```ts
 {
-  ruleId:   string   // e.g. "hardcoded-secret"
-  severity: string   // "critical" | "high" | "medium" | "low" | "info"
-  message:  string
-  fix?:     string
-  filePath: string
-  line:     number
-  snippet?: string
+  ruleId:          string   // e.g. "hardcoded-secret"
+  severity:        string   // "critical" | "high" | "medium" | "low" | "info"
+  message:         string
+  fix?:            string
+  filePath:        string
+  line:            number
+  snippet?:        string
+  llmExplanation?: string   // populated when config.llm is set
 }
 ```
 
@@ -251,8 +252,11 @@ console.log(findings)
 | `missing-auth-check` | high | Route handlers with no auth middleware |
 | `xss-innerHTML` | high | Unsanitized strings assigned to `.innerHTML` |
 | `permissive-cors` | high | `cors({ origin: '*' })` in route handlers |
-| `async-no-catch` | medium | `async` functions with no `try/catch` or `.catch()` — in `--rules all` only |
+| `jwt-in-localstorage` | high | JWT or auth tokens stored in `localStorage` |
+| `swallowed-error` | high | Empty or comment-only catch blocks that discard exceptions silently |
+| `auth-masking` | critical | Catch blocks that swallow auth/token errors, allowing failed auth to silently pass |
 | `http-not-https` | medium | Hardcoded `http://` URLs in fetch or axios calls |
+| `async-no-catch` | medium | `async` functions with no `try/catch` or `.catch()` — in `--rules all` only |
 
 ### Examples
 
@@ -267,6 +271,19 @@ authenticate("sk-abc123def456ghi789jklmno0123456789")
 
 // ✔ not flagged — environment variable
 const apiKey = process.env.GITHUB_TOKEN
+```
+
+**sql-injection** — catches template literal and string concatenation patterns:
+
+```ts
+// ✖ detected — template literal interpolation
+const result = await db.query(`SELECT * FROM users WHERE id = ${req.params.id}`)
+
+// ✖ detected — string concatenation
+const result = await db.query("SELECT * FROM users WHERE name = '" + req.body.name + "'")
+
+// ✔ not flagged — parameterised query
+const result = await db.query('SELECT * FROM users WHERE id = $1', [req.params.id])
 ```
 
 **missing-auth-check** — flags unprotected route handlers:
@@ -285,24 +302,108 @@ router.post('/admin/delete', authenticate, async (req, res) => {
 })
 ```
 
-**sql-injection** — catches template literal and string concatenation patterns:
+**jwt-in-localstorage** — catches auth tokens stored where XSS can read them:
 
 ```ts
-// ✖ detected — template literal interpolation
-const result = await db.query(`SELECT * FROM users WHERE id = ${req.params.id}`)
+// ✖ detected — token stored in localStorage
+localStorage.setItem('token', jwtToken)
+localStorage.setItem('auth_token', response.data.token)
 
-// ✖ detected — string concatenation
-const result = await db.query("SELECT * FROM users WHERE name = '" + req.body.name + "'")
+// ✔ not flagged — non-auth storage
+localStorage.setItem('theme', 'dark')
+```
 
-// ✔ not flagged — parameterised query
-const result = await db.query('SELECT * FROM users WHERE id = $1', [req.params.id])
+**swallowed-error** — catches exceptions silently discarded:
+
+```ts
+// ✖ detected — empty catch
+try {
+  await db.query('DELETE FROM sessions WHERE id = $1', [id])
+} catch (e) {
+}
+
+// ✔ not flagged — error is logged
+try {
+  await db.query('DELETE FROM sessions WHERE id = $1', [id])
+} catch (e) {
+  console.error(e)
+}
+```
+
+**auth-masking** — catches failed auth checks silently swallowed:
+
+```ts
+// ✖ detected — verifyToken throws but next() is called anyway
+try {
+  await verifyToken(req.headers.authorization)
+} catch (e) {
+  next()
+}
+
+// ✔ not flagged — responds 401
+try {
+  await verifyToken(req.headers.authorization)
+} catch (e) {
+  return res.status(401).json({ error: 'Unauthorized' })
+}
 ```
 
 ---
 
-## Public Route Markers
+## Inline Suppression
 
-Routes intentionally exposed without authentication can be marked to suppress `missing-auth-check`:
+Suppress findings without removing code. Supports JS/TS (`//`) and Python (`#`) comment styles.
+
+### Suppress current line
+
+```ts
+const apiKey = "sk-abc123abc123abc123abc"  // hallint-disable
+const apiKey = "sk-abc123abc123abc123abc"  // hallint-disable hardcoded-secret
+```
+
+### Suppress next line
+
+```ts
+// hallint-disable-next-line
+const apiKey = "sk-abc123abc123abc123abc"
+
+// hallint-disable-next-line hardcoded-secret
+const apiKey = "sk-abc123abc123abc123abc"
+```
+
+### Suppress a block
+
+```ts
+// hallint-disable-block
+const key1 = "sk-abc123abc123abc123abc"
+const key2 = "ghp_abc123abc123abc123abc"
+// hallint-enable-block
+
+// hallint-disable-block hardcoded-secret
+const key = "sk-abc123abc123abc123abc"
+// hallint-enable-block
+```
+
+Unclosed `hallint-disable-block` suppresses to end of file.
+
+---
+
+## Public Route Allowlist
+
+Declare intentionally public routes once in config — no per-route comments needed:
+
+```ts
+import { scan } from '@asyncinnovator/hallint'
+
+await scan({
+  files: './src',
+  publicRoutes: ['/health', '/login', '/register', /^\/api\/docs/],
+})
+```
+
+Routes matching any entry are excluded from `missing-auth-check`. Supports exact strings and regex patterns.
+
+You can also mark individual routes inline without touching config:
 
 ```ts
 // public
@@ -317,6 +418,35 @@ router.post('/webhook', /* hallint-public */ async (req, res) => {
 ```
 
 All three marker styles are supported. The marker can appear on the line above the route or inline on the same line.
+
+---
+
+## LLM Layer
+
+Add plain-English explanations to every finding — opt-in, never required, never affects exit codes.
+
+```ts
+await scan({
+  files: './src',
+  llm: {
+    provider: 'anthropic',   // 'openai' | 'anthropic' | 'ollama'
+    model: 'claude-haiku-4-5',
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  },
+})
+```
+
+Each finding gets an `llmExplanation` field with a 2–4 sentence explanation of why the pattern is dangerous and what to do. LLM errors (rate limits, bad key, timeout) are silently ignored — findings are always returned.
+
+**OpenAI:**
+```ts
+llm: { provider: 'openai', model: 'gpt-4o-mini', apiKey: process.env.OPENAI_API_KEY }
+```
+
+**Ollama (no API key required):**
+```ts
+llm: { provider: 'ollama', model: 'llama3', baseUrl: 'http://localhost:11434' }
+```
 
 ---
 
@@ -338,7 +468,7 @@ const noConsoleLog: Rule = {
 await scan({ files: './src', rules: [noConsoleLog] })
 ```
 
-For rules that need multi-line context or structured detection, use `match()` instead of `pattern`:
+For rules that need multi-line context, use `match()` instead of `pattern`:
 
 ```ts
 const noEmptyPromiseCatch: Rule = {
@@ -386,14 +516,6 @@ jobs:
         with:
           node-version: 20
       - run: npx @asyncinnovator/hallint-cli ./src --min-severity high
-```
-
-### Pre-commit hook
-
-```bash
-npm install --save-dev husky
-npx husky init
-echo "npx @asyncinnovator/hallint-cli ./src --min-severity high" > .husky/pre-commit
 ```
 
 ---
