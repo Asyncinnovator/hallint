@@ -190,3 +190,14 @@ describe("jwt-in-localstorage", () => {
   it("flags JWT stored in localStorage", () => expect(findingsFor("jwt-in-localstorage", fixture("jwt-in-localstorage", "bad")).length).toBeGreaterThan(0))
   it("does not flag non-auth localStorage usage", () => expect(findingsFor("jwt-in-localstorage", fixture("jwt-in-localstorage", "good"))).toHaveLength(0))
 })
+
+
+describe("swallowed-error", () => {
+  it("flags empty catch blocks", () => expect(findingsFor("swallowed-error", fixture("swallowed-error", "bad")).length).toBeGreaterThan(0))
+  it("does not flag catch blocks that log or rethrow", () => expect(findingsFor("swallowed-error", fixture("swallowed-error", "good"))).toHaveLength(0))
+})
+
+describe("auth-masking", () => {
+  it("flags catch blocks that swallow auth errors", () => expect(findingsFor("auth-masking", fixture("auth-masking", "bad")).length).toBeGreaterThan(0))
+  it("does not flag catch blocks that respond 401 or rethrow", () => expect(findingsFor("auth-masking", fixture("auth-masking", "good"))).toHaveLength(0))
+})

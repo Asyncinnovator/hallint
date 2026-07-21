@@ -185,9 +185,145 @@ export const jwtInLocalStorage: Rule = {
 }
 
 
+export const swallowedError: Rule = {
+  id: "swallowed-error",
+  severity: "high",
+  languages: ["js", "ts", "jsx", "tsx"],
+  layer: "ast",
+  message: "Empty or near-empty catch block — exception is silently discarded",
+  fix: "Log the error or rethrow it: catch (e) { logger.error(e); throw e }",
+  docs: "https://github.com/Asyncinnovator/hallint",
+  match(source) {
+    const matches: { line: number; snippet?: string }[] = []
+    const lines = source.split("\n")
+    let i = 0
+    while (i < lines.length) {
+      if (/\bcatch\s*\(/.test(lines[i])) {
+        const catchLine = i + 1
+        const catchSnippet = lines[i].trim()
+
+        // Find the line containing the opening {
+        let j = i
+        while (j < lines.length && !lines[j].includes("{")) j++
+
+        // Collect body lines strictly after the { line
+        let braceDepth = 1
+        const bodyLines: string[] = []
+        let k = j + 1
+        while (k < lines.length) {
+          const stripped = stripStrings(lines[k])
+          braceDepth += (stripped.match(/\{/g) || []).length
+          braceDepth -= (stripped.match(/\}/g) || []).length
+          if (braceDepth <= 0) break
+          bodyLines.push(lines[k])
+          k++
+        }
+
+        const body = bodyLines.join("\n")
+        const codeOnly = body
+          .replace(/\/\/[^\n]*/g, "")
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/\s/g, "")
+
+        if (codeOnly.length === 0) {
+          matches.push({ line: catchLine, snippet: catchSnippet })
+        }
+
+        i = k + 1
+        continue
+      }
+      i++
+    }
+    return matches
+  },
+}
+
+export const authMasking: Rule = {
+  id: "auth-masking",
+  severity: "critical",
+  languages: ["js", "ts", "jsx", "tsx"],
+  layer: "ast",
+  message: "Catch block swallows an auth/token error — failed authentication may silently pass",
+  fix: "Rethrow or respond with 401 in the catch block: catch (e) { return res.status(401).json({ error: 'Unauthorized' }) }",
+  docs: "https://github.com/Asyncinnovator/hallint",
+  match(source) {
+    const matches: { line: number; snippet?: string }[] = []
+    const lines = source.split("\n")
+    const authPattern = /\b(?:verifyToken|verify|authenticate|checkAuth|validateToken|jwtVerify|jwt\.verify|requireAuth|isAuthenticated|checkPermission)\s*\(/
+    let i = 0
+    while (i < lines.length) {
+      if (/\btry\s*\{/.test(lines[i])) {
+        // Find opening { of try
+        let j = i
+        while (j < lines.length && !lines[j].includes("{")) j++
+
+        // Collect try body — stop at first line that closes the try block
+        let braceDepth = 1
+        const tryLines: string[] = []
+        let k = j + 1
+        while (k < lines.length) {
+          const stripped = stripStrings(lines[k])
+          const closes = (stripped.match(/\}/g) || []).length
+          const opens = (stripped.match(/\{/g) || []).length
+          // If closes would drop depth to 0, this line ends the try — stop before adding it
+          if (closes > 0 && braceDepth - closes <= 0) break
+          braceDepth += opens - closes
+          tryLines.push(lines[k])
+          k++
+        }
+
+        const tryBody = tryLines.join("\n")
+        if (authPattern.test(tryBody)) {
+          // k is the closing line (} catch (e) { or just })
+          let catchLine = k
+          if (!/\bcatch\s*\(/.test(lines[catchLine])) {
+            catchLine++
+            while (catchLine < lines.length && /^\s*$/.test(lines[catchLine])) catchLine++
+          }
+
+          if (catchLine < lines.length && /\bcatch\s*\(/.test(lines[catchLine])) {
+            const catchLineNo = catchLine + 1
+            const catchSnippet = lines[catchLine].trim()
+
+            // Find opening { of catch block
+            let m = catchLine
+            while (m < lines.length && !lines[m].includes("{")) m++
+
+            // Collect catch body from line after {
+            let catchDepth = 1
+            const catchLines: string[] = []
+            let n = m + 1
+            while (n < lines.length) {
+              const stripped = stripStrings(lines[n])
+              catchDepth += (stripped.match(/\{/g) || []).length
+              catchDepth -= (stripped.match(/\}/g) || []).length
+              if (catchDepth <= 0) break
+              catchLines.push(lines[n])
+              n++
+            }
+
+            const catchBody = catchLines.join("\n")
+            const hasRethrow = /\bthrow\b/.test(catchBody)
+            const hasErrorResponse = /(?:res|response)\s*\.\s*(?:status\s*\(\s*(?:401|403|500)\s*\)|sendStatus\s*\(\s*(?:401|403|500)\s*\))/.test(catchBody)
+            const hasLogging = /\b(?:console\.(?:error|warn)|logger\.(?:error|warn))\s*\(/.test(catchBody)
+            if (!hasRethrow && !hasErrorResponse && !hasLogging) {
+              matches.push({ line: catchLineNo, snippet: catchSnippet })
+            }
+          }
+        }
+        i = k + 1
+        continue
+      }
+      i++
+    }
+    return matches
+  },
+}
+
 export const allRules: Rule[] = [
   hardcodedSecret, sqlInjection, unsafeEval, missingAuthCheck,
-  xssInnerHTML, permissiveCors, asyncNoCatch, httpNotHttps, jwtInLocalStorage,
+  xssInnerHTML, permissiveCors, asyncNoCatch, httpNotHttps,
+  jwtInLocalStorage, swallowedError, authMasking,
 ]
 
 export const recommendedRules: Rule[] = allRules
